@@ -1,0 +1,365 @@
+#!/usr/bin/env python
+
+import os
+import json
+import pygtk
+pygtk.require('2.0')
+import gtk
+import vte
+import subprocess
+
+
+from encrypt import method_supported
+from utils import get_config, CONFIG_FILE
+
+
+DEFAULT_LOGLEVEL = 'info'
+WINDOW_HEIGHT = 260
+WINDOW_WIDTH = 450
+VTE_HEIGHT = 200
+LINE_HEIGHT = 25
+LINE_HEADER_WIDTH = 120
+ADDRESS_WIDTH = 180
+PORT_WIDTH = 50
+LOGO_FILE = 'shadowsocks.png'
+
+DEFAULT_SERVER = ('209.141.36.62', '8348')
+DEFAULT_LOCAL = ('127.0.0.1', '2046')
+DEFAULT_TIMEOUT = 600
+
+
+class ShadowSocks(object):
+    command = ['/usr/bin/env', 'python', 'local.py']
+
+    def __init__(self, window=None):
+        self.config = get_config()
+        self.servers = [DEFAULT_SERVER]
+        server_ip = self.config.get('server', None)
+        server_port = self.config.get('server_port', None)
+        if server_ip and server_port:
+            self.server_ip = str(server_ip)
+            self.server_port = str(server_port)
+            self.servers.append((self.server_ip, self.server_port))
+        else:
+            self.server_ip = DEFAULT_SERVER[0]
+            self.server_port = DEFAULT_SERVER[1]
+
+        self.local_ip = self.config.get('local_address', DEFAULT_LOCAL[0])
+        self.local_port = str(self.config.get('local_port', DEFAULT_LOCAL[1]))
+        self.password = self.config.get('password', None)
+        self.timeout = str(self.config.get('timeout', DEFAULT_TIMEOUT))
+        self.supported_methods = method_supported.keys()
+        method = self.config.get('method')
+        self.method = self.supported_methods.index(method) if (method in self.supported_methods) else 0
+        self.status = 'disconnected'
+        self.childpid = None
+        self.childexited = True
+
+        self.window = window
+        self.labels = {}
+        self.entrys = {}
+        self.buttons = {}
+        if not self.window:
+            self.create_window()
+        self.create_trayicon()
+        self.create_menu()
+        self.fill_window()
+        self.visible = False
+
+    def create_window(self):
+        # create a new window
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_title('ShadowSocks')
+        self.window.set_position(gtk.WIN_POS_CENTER)
+        self.window.set_border_width(10)
+        self.window.connect("delete_event", self.delete_event)
+        self.window.connect("destroy", self.destroy)
+        self.window.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.window.set_icon_from_file("shadowsocks.png")
+
+    def create_trayicon(self):
+        self.trayicon = gtk.StatusIcon()
+        self.trayicon.set_from_file(LOGO_FILE)
+        self.trayicon.connect('popup-menu', self.show_menu)
+        self.trayicon.set_tooltip('ShadowSocks')
+        self.trayicon.set_visible(True)
+
+    def show_menu(self, statusicon, button, activation_time):
+        if self.visible:
+            self.showhide_item.set_label('Hide')
+            self.showhide_item.connect('activate', self.hide)
+        else:
+            self.showhide_item.set_label('Show')
+            self.showhide_item.connect('activate', self.show)
+        self.menu.popup(None, None, gtk.status_icon_position_menu, button, activation_time, self.trayicon)
+
+    def create_menu(self):
+        self.menu = gtk.Menu()
+        self.showhide_item = gtk.MenuItem('Hide')
+        self.showhide_item.connect('activate', self.hide)
+        self.quit_item = gtk.MenuItem('Quit')
+        self.quit_item.connect('activate', self.destroy)
+        self.menu.append(self.showhide_item)
+        self.menu.append(self.quit_item)
+        self.menu.show_all()
+
+    def add_line(self, labelname='Default Label :', elements=None):
+        #create HBox
+        hbox = gtk.HBox(False, 0)
+        self.vbox.pack_start(hbox, False, False, 0)
+        #create label header
+        label = gtk.Label(labelname + ' :')
+        label.set_size_request(LINE_HEADER_WIDTH, LINE_HEIGHT)
+        label.set_properties(xalign=1)
+        hbox.pack_start(label, False, False, 10)
+        label.show()
+        label_name = labelname.lower()
+        self.labels[label_name] = label
+
+        if elements:
+            for e in elements:
+                hbox.pack_start(e[0], e[1], e[1], e[2])
+        return hbox
+
+    def update_port(self, entry):
+        updated = False
+        s = entry.get_text()
+        for server in self.servers:
+            if s == server[0]:
+                self.entrys['server_port'].set_text(server[1])
+                self.entrys['server_port'].set_sensitive(False)
+                updated = True
+        if updated is False:
+            self.entrys['server_port'].set_sensitive(True)
+
+    def check_port(self, entry):
+        port = entry.get_text()
+        if not port.isdigit():
+            entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("red"))
+        else:
+            entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
+
+    def fill_window(self):
+        self.vbox = gtk.VBox(False, 10)
+        self.window.add(self.vbox)
+        #Server Line
+        liststore = gtk.ListStore(str)
+        self.entrys['server_ip'] = gtk.ComboBoxEntry(liststore, 0)
+        self.entrys['server_ip'].append_text(self.server_ip)
+        self.entrys['server_ip'].child.set_text(self.server_ip)
+        if self.server_ip != DEFAULT_SERVER[0]:
+            self.entrys['server_ip'].modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
+        self.entrys['server_ip'].set_size_request(ADDRESS_WIDTH, LINE_HEIGHT)
+        self.labels['server_colon'] = gtk.Label(':')
+        self.labels['server_colon'].set_properties(xalign=0.5)
+        self.entrys['server_port'] = gtk.Entry()
+        self.entrys['server_port'].set_size_request(PORT_WIDTH, LINE_HEIGHT)
+        self.entrys['server_port'].set_text(self.server_port)
+        elements = [(self.entrys['server_ip'], True, 0),
+                    (self.labels['server_colon'], False, 0),
+                    (self.entrys['server_port'], False, 0)]
+        self.server_hbox = self.add_line('Server Address', elements)
+        self.entrys['server_port'].connect('changed', self.check_port)
+        self.entrys['server_ip'].child.connect('changed', self.update_port)
+
+        #Local Line
+        self.entrys['local_ip'] = gtk.Entry()
+        self.entrys['local_ip'].set_size_request(ADDRESS_WIDTH, LINE_HEIGHT)
+        self.entrys['local_ip'].set_text(self.local_ip)
+        self.labels['local_colon'] = gtk.Label(':')
+        self.labels['local_colon'].set_properties(xalign=0.5)
+        self.entrys['local_port'] = gtk.Entry()
+        self.entrys['local_port'].set_size_request(PORT_WIDTH, LINE_HEIGHT)
+        self.entrys['local_port'].set_text(self.local_port)
+        elements = [(self.entrys['local_ip'], True, 0),
+                    (self.labels['local_colon'], False, 0),
+                    (self.entrys['local_port'], False, 0)]
+        self.local_hbox = self.add_line('Local Listening', elements)
+
+        #Password Line
+        self.entrys['password'] = gtk.Entry()
+        self.entrys['password'].set_visibility(False)
+        if self.password:
+            self.entrys['password'].set_text(self.password)
+        elements = [(self.entrys['password'], True, 0)]
+        self.pass_hbox = self.add_line('Password', elements)
+
+        #Encryption Method Line
+        self.entrys['encrypt_method'] = gtk.combo_box_new_text()
+        for method in self.supported_methods:
+            self.entrys['encrypt_method'].append_text(method)
+        self.entrys['encrypt_method'].set_active(self.method)
+        elements = [(self.entrys['encrypt_method'], True, 0)]
+        self.encrypt_hbox = self.add_line('Encryption Method', elements)
+
+        #Timeout Line
+        self.entrys['timeout'] = gtk.Entry()
+        self.entrys['timeout'].set_text(self.timeout)
+        elements = [(self.entrys['timeout'], True, 0)]
+        self.timeout_hbox = self.add_line('Timeout in Second', elements)
+
+        #Status Line
+        self.labels['current_status'] = gtk.Label(self.status)
+        self.labels['current_status'].set_properties(xalign=0)
+        self.labels['current_status'].show()
+        self.buttons['detail'] = gtk.Button('show detail')
+        self.buttons['detail'].set_size_request(80, LINE_HEIGHT)
+        self.buttons['detail'].connect("clicked", self.toggle_detail_button, None)
+        elements = [(self.labels['current_status'], True, 0),
+                    (self.buttons['detail'], False, 0)]
+        self.status_hbox = self.add_line('Current Status', elements)
+
+        #Add buttonbox
+        self.add_buttonbox()
+
+        #Terminal Window
+        self.terminal = vte.Terminal()
+        self.terminal.set_size_request(380, 180)
+        self.vbox.pack_start(self.terminal, True, True, 0)
+
+        #Show them
+        self.server_hbox.show_all()
+        self.local_hbox.show_all()
+        self.pass_hbox.show_all()
+        self.encrypt_hbox.show_all()
+        self.timeout_hbox.show_all()
+        self.status_hbox.show()
+        self.buttonbox.show_all()
+        self.vbox.show()
+
+    def add_buttonbox(self):
+        #HButtonBox
+        self.buttonbox = gtk.HButtonBox()
+        self.buttonbox.set_layout(gtk.BUTTONBOX_END)
+        self.buttons['connect'] = gtk.Button('Connect')
+        self.buttons['close'] = gtk.Button(stock=gtk.STOCK_CLOSE)
+        self.buttonbox.add(self.buttons['connect'])
+        self.buttonbox.add(self.buttons['close'])
+        self.buttons['close'].set_size_request(60, LINE_HEIGHT)
+        self.buttons['close'].connect_object("clicked", self.destroy, self.window)
+        self.buttons['connect'].set_size_request(60, LINE_HEIGHT)
+        self.buttons['connect'].connect("clicked", self.connect, None)
+        self.vbox.pack_start(self.buttonbox, False, False, 0)
+
+    def show_vte(self):
+        self.window.resize(WINDOW_WIDTH, WINDOW_HEIGHT + VTE_HEIGHT)
+        self.terminal.show()
+
+    def hide_vte(self):
+        self.window.resize(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.terminal.hide()
+
+    def on_child_exited(self, term):
+        self.childexited = True
+        self.update_status(False)
+        self.hide_vte()
+        self.hide_detail_button()
+
+    def update_status(self, connect):
+        if connect:
+            self.status = 'connected'
+            self.buttons['connect'].set_label('Disconnect')
+            self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("green"))
+            self.labels['current_status'].set_text('%s to %s' %
+                                                   (self.status, self.entrys['server_ip'].child.get_text()))
+            self.buttons['connect'].connect("clicked", self.disconnect, None)
+        else:
+            self.status = 'disconnected'
+            self.buttons['connect'].set_label('Connect')
+            self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
+            self.labels['current_status'].set_text(self.status)
+            self.buttons['connect'].connect("clicked", self.connect, None)
+
+    def show(self, widget=None):
+        self.window.show()
+        self.visible = True
+
+    def hide(self, widget=None):
+        self.window.hide()
+        self.visible = False
+
+    def save(self):
+        self.server_ip = self.entrys['server_ip'].child.get_text()
+        self.server_port = self.entrys['server_port'].get_text()
+        self.local_ip = self.entrys['local_ip'].get_text()
+        self.local_port = self.entrys['local_port'].get_text()
+        self.password = self.entrys['password'].get_text()
+        self.timeout = self.entrys['timeout'].get_text()
+        self.method = self.entrys['encrypt_method'].get_active()
+
+        self.config['server'] = self.server_ip
+        self.config['server_port'] = int(self.server_port)
+        self.config['local_address'] = self.local_ip
+        self.config['local_port'] = int(self.local_port)
+        self.config['password'] = self.password
+        self.config['timeout'] = int(self.timeout)
+        self.config['method'] = self.supported_methods[self.method]
+        self.config['level'] = DEFAULT_LOGLEVEL
+        with open(CONFIG_FILE, 'wb') as f:
+            json.dump(self.config, f)
+
+    def toggle_detail_button(self, widget, data=None):
+        if self.buttons['detail'].get_label() == 'show detail':
+            self.buttons['detail'].set_label('hide detail')
+            self.show_vte()
+        else:
+            self.buttons['detail'].set_label('show detail')
+            self.hide_vte()
+
+    def show_detail_button(self):
+        if self.status == 'connected':
+            self.buttons['detail'].set_label('show detail')
+        else:
+            self.buttons['detail'].set_label('hide detail')
+        self.buttons['detail'].show()
+
+    def hide_detail_button(self):
+        self.buttons['detail'].hide()
+
+    def run(self):
+        if self.childexited:
+            self.childpid = self.terminal.fork_command(self.command[0], self.command, os.getcwd())
+            if self.childpid > 0:
+                self.childexited = False
+                self.terminal.connect('child-exited', self.on_child_exited)
+            else:
+                self.childexited = False
+
+    def stop(self):
+        if not self.childexited:
+            code0 = subprocess.call(['kill', str(self.childpid)])
+            if code0 != 0:
+                subprocess.call(['kill', '-9', str(self.childpid)])
+            self.childexited = True
+
+    def connect(self, widget, data=None):
+        #TODO, create file if not present
+        if True:
+            self.save()
+            self.run()
+            self.update_status(True)
+            self.show_detail_button()
+
+    def disconnect(self, widget, data=None):
+        self.stop()
+        self.update_status(True)
+        self.hide_detail_button()
+
+    def destroy(self, widget, data=None):
+        self.stop()
+        gtk.main_quit()
+
+    def delete_event(self, widget, data=None):
+        return False
+
+    def main(self):
+        # All PyGTK applications must have a gtk.main(). Control ends here
+        # and waits for an event to occur (like a key press or mouse event).
+        self.show()
+        gtk.main()
+
+# If the program is run directly or passed as an argument to the python
+# interpreter then create a HelloWorld instance and show it
+if __name__ == "__main__":
+    shadowsocks = ShadowSocks()
+    shadowsocks.main()

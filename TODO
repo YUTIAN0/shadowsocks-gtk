@@ -1,0 +1,10 @@
+1. Internationalization.
+2. Add serverlist support.
+3. Sync "Current Status" according to reality.
+4. Minimize to trayicon. 
+5. Add "Connect/Disconnect" Item in TrayIcon.
+6. See UDPASOC, support it if necessary.
+7. Add more Try/Except.
+8. Add License
+9. Installation Guide.
+10. Tab support between Entrys.
