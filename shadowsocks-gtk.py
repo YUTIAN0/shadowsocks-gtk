@@ -91,8 +91,11 @@ class ShadowSocks(object):
         self.menu = gtk.Menu()
         self.showhide_item = gtk.MenuItem('Hide')
         self.showhide_item.connect('activate', self.toggle_showhide_item)
+        self.connect_item = gtk.MenuItem('Connect')
+        self.connect_item.connect('activate', self.toggle_connect)
         self.quit_item = gtk.MenuItem('Quit')
         self.quit_item.connect('activate', self.destroy)
+        self.menu.append(self.connect_item)
         self.menu.append(self.showhide_item)
         self.menu.append(self.quit_item)
         self.menu.show_all()
@@ -248,12 +251,14 @@ class ShadowSocks(object):
         if connect:
             self.status = 'connected'
             self.buttons['connect'].set_label('Disconnect')
+            self.connect_item.set_label('Disconnect')
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("green"))
             self.labels['current_status'].set_text('%s to %s' %
                                                    (self.status, self.entrys['server_ip'].child.get_text()))
         else:
             self.status = 'disconnected'
             self.buttons['connect'].set_label('Connect')
+            self.connect_item.set_label('Connect')
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
             self.labels['current_status'].set_text(self.status)
 
@@ -326,7 +331,7 @@ class ShadowSocks(object):
             self.childexited = True
 
     def toggle_connect(self, widget=None):
-        if self.buttons['connect'].get_label() == 'Connect':
+        if self.status == 'disconnected':
             self.save()
             self.run()
             self.update_status(True)
