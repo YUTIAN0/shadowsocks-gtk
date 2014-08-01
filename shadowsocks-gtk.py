@@ -350,13 +350,8 @@ class ShadowSocks(object):
         return True
 
     def main(self):
-        # All PyGTK applications must have a gtk.main(). Control ends here
-        # and waits for an event to occur (like a key press or mouse event).
-        self.show()
         gtk.main()
 
-# If the program is run directly or passed as an argument to the python
-# interpreter then create a HelloWorld instance and show it
 if __name__ == "__main__":
     shadowsocks = ShadowSocks()
     shadowsocks.main()
