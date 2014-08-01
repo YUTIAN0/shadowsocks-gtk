@@ -233,7 +233,7 @@ class ShadowSocks(object):
         self.buttons['close'].set_size_request(60, LINE_HEIGHT)
         self.buttons['close'].connect_object("clicked", self.destroy, self.window)
         self.buttons['connect'].set_size_request(60, LINE_HEIGHT)
-        self.buttons['connect'].connect("clicked", self.connect, None)
+        self.buttons['connect'].connect("clicked", self.toggle_connect)
         self.vbox.pack_start(self.buttonbox, False, False, 0)
 
     def show_vte(self):
@@ -257,13 +257,11 @@ class ShadowSocks(object):
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("green"))
             self.labels['current_status'].set_text('%s to %s' %
                                                    (self.status, self.entrys['server_ip'].child.get_text()))
-            self.buttons['connect'].connect("clicked", self.disconnect, None)
         else:
             self.status = 'disconnected'
             self.buttons['connect'].set_label('Connect')
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
             self.labels['current_status'].set_text(self.status)
-            self.buttons['connect'].connect("clicked", self.connect, None)
 
     def show(self, widget=None):
         self.window.show()
@@ -331,18 +329,14 @@ class ShadowSocks(object):
                 subprocess.call(['kill', '-9', str(self.childpid)])
             self.childexited = True
 
-    def connect(self, widget, data=None):
-        #TODO, create file if not present
-        if True:
+    def toggle_connect(self, widget=None):
+        if self.buttons['connect'].get_label() == 'Connect':
             self.save()
             self.run()
             self.update_status(True)
             self.show_detail_button()
-
-    def disconnect(self, widget, data=None):
-        self.stop()
-        self.update_status(True)
-        self.hide_detail_button()
+        else:
+            self.stop()
 
     def destroy(self, widget, data=None):
         self.stop()
