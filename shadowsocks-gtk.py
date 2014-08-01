@@ -43,8 +43,8 @@ ADDRESS_WIDTH = 180
 PORT_WIDTH = 50
 LOGO_FILE = 'shadowsocks.png'
 
-DEFAULT_SERVER = ('209.141.36.62', '8348')
-DEFAULT_LOCAL = ('127.0.0.1', '1080')
+DEFAULT_SERVER = ['209.141.36.62', '8348']
+DEFAULT_LOCAL = ['127.0.0.1', '1080']
 DEFAULT_TIMEOUT = 600
 
 
@@ -284,12 +284,10 @@ class ShadowSocks(object):
 
     def toggle_showhide_item(self, widget=None):
         if self.showhide_item.get_label() == 'Show':
-            print('showing')
             self.window.deiconify()
             self.window.show()
             self.showhide_item.set_label('Hide')
         else:
-            print('hiding')
             self.window.iconify()
 
     def save(self):
@@ -300,7 +298,7 @@ class ShadowSocks(object):
         self.password = self.entrys['password'].get_text()
         self.timeout = self.entrys['timeout'].get_text()
         self.method = self.entrys['encrypt_method'].get_active()
-        server = (self.server_ip, self.server_port)
+        server = [self.server_ip, self.server_port]
         if server not in self.servers:
             self.servers.append(server)
 
@@ -364,12 +362,10 @@ class ShadowSocks(object):
         gtk.main_quit()
 
     def state_event(self, window, event):
-        print('Got invoked %s' % repr(event.new_window_state))
         if event.changed_mask == gtk.gdk.WINDOW_STATE_ICONIFIED\
             and (event.new_window_state == gtk.gdk.WINDOW_STATE_ICONIFIED
                  or event.new_window_state == (gtk.gdk.WINDOW_STATE_ICONIFIED |
                                                gtk.gdk.WINDOW_STATE_MAXIMIZED)):
-            print('inside hiding')
             self.showhide_item.set_label('Show')
             self.window.hide()
         return True
