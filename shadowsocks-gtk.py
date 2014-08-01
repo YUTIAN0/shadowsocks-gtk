@@ -63,7 +63,6 @@ class ShadowSocks(object):
         self.create_trayicon()
         self.create_menu()
         self.fill_window()
-        self.visible = False
 
     def create_window(self):
         # create a new window
@@ -71,32 +70,27 @@ class ShadowSocks(object):
         self.window.set_title('ShadowSocks')
         self.window.set_position(gtk.WIN_POS_CENTER)
         self.window.set_border_width(10)
-        self.window.connect("delete_event", self.delete_event)
+        self.window.connect('window-state-event', self.state_event)
         self.window.connect("destroy", self.destroy)
         self.window.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.window.set_icon_from_file("shadowsocks.png")
+        self.window.show()
 
     def create_trayicon(self):
         self.trayicon = gtk.StatusIcon()
         self.trayicon.set_from_file(LOGO_FILE)
         self.trayicon.connect('popup-menu', self.show_menu)
-        self.trayicon.connect('activate', self.show)
+        self.trayicon.connect('activate', self.toggle_showhide_item)
         self.trayicon.set_tooltip('ShadowSocks')
         self.trayicon.set_visible(True)
 
     def show_menu(self, statusicon, button, activation_time):
-        if self.visible:
-            self.showhide_item.set_label('Hide')
-            self.showhide_item.connect('activate', self.hide)
-        else:
-            self.showhide_item.set_label('Show')
-            self.showhide_item.connect('activate', self.show)
         self.menu.popup(None, None, gtk.status_icon_position_menu, button, activation_time, self.trayicon)
 
     def create_menu(self):
         self.menu = gtk.Menu()
         self.showhide_item = gtk.MenuItem('Hide')
-        self.showhide_item.connect('activate', self.hide)
+        self.showhide_item.connect('activate', self.toggle_showhide_item)
         self.quit_item = gtk.MenuItem('Quit')
         self.quit_item.connect('activate', self.destroy)
         self.menu.append(self.showhide_item)
@@ -263,13 +257,15 @@ class ShadowSocks(object):
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
             self.labels['current_status'].set_text(self.status)
 
-    def show(self, widget=None):
-        self.window.show()
-        self.visible = True
-
-    def hide(self, widget=None):
-        self.window.hide()
-        self.visible = False
+    def toggle_showhide_item(self, widget=None):
+        if self.showhide_item.get_label() == 'Show':
+            print('showing')
+            self.window.deiconify()
+            self.window.show()
+            self.showhide_item.set_label('Hide')
+        else:
+            print('hiding')
+            self.window.iconify()
 
     def save(self):
         self.server_ip = self.entrys['server_ip'].child.get_text()
@@ -342,8 +338,16 @@ class ShadowSocks(object):
         self.stop()
         gtk.main_quit()
 
-    def delete_event(self, widget, data=None):
-        return False
+    def state_event(self, window, event):
+        print('Got invoked %s' % repr(event.new_window_state))
+        if event.changed_mask == gtk.gdk.WINDOW_STATE_ICONIFIED\
+            and (event.new_window_state == gtk.gdk.WINDOW_STATE_ICONIFIED
+                 or event.new_window_state == (gtk.gdk.WINDOW_STATE_ICONIFIED |
+                                               gtk.gdk.WINDOW_STATE_MAXIMIZED)):
+            print('inside hiding')
+            self.showhide_item.set_label('Show')
+            self.window.hide()
+        return True
 
     def main(self):
         # All PyGTK applications must have a gtk.main(). Control ends here
