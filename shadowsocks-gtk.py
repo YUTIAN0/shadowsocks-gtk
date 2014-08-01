@@ -24,7 +24,7 @@ PORT_WIDTH = 50
 LOGO_FILE = 'shadowsocks.png'
 
 DEFAULT_SERVER = ('209.141.36.62', '8348')
-DEFAULT_LOCAL = ('127.0.0.1', '2046')
+DEFAULT_LOCAL = ('127.0.0.1', '1080')
 DEFAULT_TIMEOUT = 600
 
 
@@ -33,13 +33,12 @@ class ShadowSocks(object):
 
     def __init__(self, window=None):
         self.config = get_config()
-        self.servers = [DEFAULT_SERVER]
         server_ip = self.config.get('server', None)
         server_port = self.config.get('server_port', None)
+        self.servers = self.config.get('servers', [DEFAULT_SERVER])
         if server_ip and server_port:
             self.server_ip = str(server_ip)
             self.server_port = str(server_port)
-            self.servers.append((self.server_ip, self.server_port))
         else:
             self.server_ip = DEFAULT_SERVER[0]
             self.server_port = DEFAULT_SERVER[1]
@@ -121,17 +120,6 @@ class ShadowSocks(object):
                 hbox.pack_start(e[0], e[1], e[1], e[2])
         return hbox
 
-    def update_port(self, entry):
-        updated = False
-        s = entry.get_text()
-        for server in self.servers:
-            if s == server[0]:
-                self.entrys['server_port'].set_text(server[1])
-                self.entrys['server_port'].set_sensitive(False)
-                updated = True
-        if updated is False:
-            self.entrys['server_port'].set_sensitive(True)
-
     def check_port(self, entry):
         port = entry.get_text()
         if not port.isdigit():
@@ -139,16 +127,23 @@ class ShadowSocks(object):
         else:
             entry.modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
 
+    def update_server(self, box):
+        t = box.get_active_text()
+        if ':' in t:
+            t = t.split(':')
+            box.child.set_text(t[0])
+            self.entrys['server_port'].set_text(t[1])
+
     def fill_window(self):
         self.vbox = gtk.VBox(False, 10)
         self.window.add(self.vbox)
         #Server Line
         liststore = gtk.ListStore(str)
         self.entrys['server_ip'] = gtk.ComboBoxEntry(liststore, 0)
-        self.entrys['server_ip'].append_text(self.server_ip)
+        for server in self.servers:
+            self.entrys['server_ip'].append_text(server[0] + ':' + server[1])
         self.entrys['server_ip'].child.set_text(self.server_ip)
-        if self.server_ip != DEFAULT_SERVER[0]:
-            self.entrys['server_ip'].modify_text(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
+        self.entrys['server_ip'].connect('changed', self.update_server)
         self.entrys['server_ip'].set_size_request(ADDRESS_WIDTH, LINE_HEIGHT)
         self.labels['server_colon'] = gtk.Label(':')
         self.labels['server_colon'].set_properties(xalign=0.5)
@@ -160,7 +155,6 @@ class ShadowSocks(object):
                     (self.entrys['server_port'], False, 0)]
         self.server_hbox = self.add_line('Server Address', elements)
         self.entrys['server_port'].connect('changed', self.check_port)
-        self.entrys['server_ip'].child.connect('changed', self.update_port)
 
         #Local Line
         self.entrys['local_ip'] = gtk.Entry()
@@ -286,7 +280,11 @@ class ShadowSocks(object):
         self.password = self.entrys['password'].get_text()
         self.timeout = self.entrys['timeout'].get_text()
         self.method = self.entrys['encrypt_method'].get_active()
+        server = (self.server_ip, self.server_port)
+        if server not in self.servers:
+            self.servers.append(server)
 
+        self.config['servers'] = self.servers
         self.config['server'] = self.server_ip
         self.config['server_port'] = int(self.server_port)
         self.config['local_address'] = self.local_ip
