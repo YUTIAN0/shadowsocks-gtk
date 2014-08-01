@@ -1,7 +1,5 @@
 1. Internationalization.
 3. Sync "Current Status" according to reality.
-4. Minimize to trayicon. 
-5. Add "Connect/Disconnect" Item in TrayIcon.
 6. See UDPASOC, support it if necessary.
 7. Add more Try/Except.
 8. Add License
