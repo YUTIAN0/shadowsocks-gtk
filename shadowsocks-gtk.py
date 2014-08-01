@@ -80,6 +80,7 @@ class ShadowSocks(object):
         self.trayicon = gtk.StatusIcon()
         self.trayicon.set_from_file(LOGO_FILE)
         self.trayicon.connect('popup-menu', self.show_menu)
+        self.trayicon.connect('activate', self.show)
         self.trayicon.set_tooltip('ShadowSocks')
         self.trayicon.set_visible(True)
 
