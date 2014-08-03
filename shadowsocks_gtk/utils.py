@@ -27,6 +27,7 @@ CONFIG_FILE = 'config.json'
 
 
 def get_config():
+    #TODO put config file in $HOME
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'rb') as f:
             options = json.load(f)

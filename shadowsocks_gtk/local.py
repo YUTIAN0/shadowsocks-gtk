@@ -228,11 +228,14 @@ class SOCKSv5(protocol.Protocol, TimeoutMixin):
         self.transport.unregisterProducer()
         self.transport.loseConnection()
 
-factory = protocol.Factory()
-factory.protocol = SOCKSv5
 
-if __name__ == "__main__":
+def main():
+    factory = protocol.Factory()
+    factory.protocol = SOCKSv5
     start_log(config['level'])
     encrypt.init_table(config['password'], config['method'])
     reactor.listenTCP(config['local_port'], factory)
     reactor.run()
+
+if __name__ == "__main__":
+    main()

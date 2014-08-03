@@ -291,6 +291,7 @@ class ShadowSocks(object):
             self.window.iconify()
 
     def save(self):
+        #TODO dump configs to $HOME
         self.server_ip = self.entrys['server_ip'].child.get_text()
         self.server_port = self.entrys['server_port'].get_text()
         self.local_ip = self.entrys['local_ip'].get_text()
@@ -362,17 +363,24 @@ class ShadowSocks(object):
         gtk.main_quit()
 
     def state_event(self, window, event):
-        if event.changed_mask == gtk.gdk.WINDOW_STATE_ICONIFIED\
-            and (event.new_window_state == gtk.gdk.WINDOW_STATE_ICONIFIED
-                 or event.new_window_state == (gtk.gdk.WINDOW_STATE_ICONIFIED |
-                                               gtk.gdk.WINDOW_STATE_MAXIMIZED)):
+        if event.changed_mask & gtk.gdk.WINDOW_STATE_ICONIFIED\
+                and event.new_window_state & gtk.gdk.WINDOW_STATE_ICONIFIED:
             self.showhide_item.set_label('Show')
             self.window.hide()
-        return True
 
     def main(self):
         gtk.main()
 
-if __name__ == "__main__":
+
+def main():
+    path = os.path.abspath(__file__)
+    if os.path.islink(path):
+        path = getattr(os, 'readlink', lambda x: x)(path)
+    os.chdir(os.path.dirname(os.path.abspath(path)))
+
     shadowsocks = ShadowSocks()
     shadowsocks.main()
+
+
+if __name__ == "__main__":
+    main()
