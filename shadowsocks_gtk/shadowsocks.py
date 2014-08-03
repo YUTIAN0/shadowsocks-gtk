@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import os
-import json
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -30,7 +29,7 @@ import subprocess
 
 
 from encrypt import method_supported
-from utils import get_config, CONFIG_FILE
+from utils import get_config, save_config
 
 
 DEFAULT_LOGLEVEL = 'info'
@@ -291,7 +290,6 @@ class ShadowSocks(object):
             self.window.iconify()
 
     def save(self):
-        #TODO dump configs to $HOME
         self.server_ip = self.entrys['server_ip'].child.get_text()
         self.server_port = self.entrys['server_port'].get_text()
         self.local_ip = self.entrys['local_ip'].get_text()
@@ -312,8 +310,7 @@ class ShadowSocks(object):
         self.config['timeout'] = int(self.timeout)
         self.config['method'] = self.supported_methods[self.method]
         self.config['level'] = DEFAULT_LOGLEVEL
-        with open(CONFIG_FILE, 'wb') as f:
-            json.dump(self.config, f)
+        save_config(self.config)
 
     def toggle_detail_button(self, widget, data=None):
         if self.buttons['detail'].get_label() == 'show detail':

@@ -23,17 +23,26 @@ import logging
 from twisted.python import log
 import json
 
+CONFIG_PATH = os.environ['HOME'] + '/.config/' + 'shadowsocks-gtk/'
 CONFIG_FILE = 'config.json'
 
 
 def get_config():
-    #TODO put config file in $HOME
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'rb') as f:
+    path = CONFIG_PATH + CONFIG_FILE
+    if os.path.exists(path):
+        with open(path, 'rb') as f:
             options = json.load(f)
         return options
     else:
         return {}
+
+
+def save_config(config):
+    if not os.path.exists(CONFIG_PATH):
+        os.makedirs(CONFIG_PATH)
+    path = CONFIG_PATH + CONFIG_FILE
+    with open(path, 'wb') as f:
+        json.dump(config, f)
 
 
 def start_log(level=logging.INFO):
