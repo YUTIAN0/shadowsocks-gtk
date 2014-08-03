@@ -42,7 +42,7 @@ ADDRESS_WIDTH = 180
 PORT_WIDTH = 50
 LOGO_FILE = 'shadowsocks.png'
 
-DEFAULT_SERVER = ['209.141.36.62', '8348']
+DEFAULT_SERVER = ['209.141.36.62', '8348', '$#HAL9000!', 'aes-256-cfb']
 DEFAULT_LOCAL = ['127.0.0.1', '1080']
 DEFAULT_TIMEOUT = 600
 
@@ -51,6 +51,7 @@ class ShadowSocks(object):
     command = ['/usr/bin/env', 'python', 'local.py']
 
     def __init__(self, window=None):
+        self.supported_methods = method_supported.keys()
         self.config = get_config()
         server_ip = self.config.get('server', None)
         server_port = self.config.get('server_port', None)
@@ -58,17 +59,18 @@ class ShadowSocks(object):
         if server_ip and server_port:
             self.server_ip = str(server_ip)
             self.server_port = str(server_port)
+            self.password = self.config.get('password')
+            method = self.config.get('method')
         else:
             self.server_ip = DEFAULT_SERVER[0]
             self.server_port = DEFAULT_SERVER[1]
+            self.password = DEFAULT_SERVER[2]
+            method = DEFAULT_SERVER[3]
 
+        self.method = self.supported_methods.index(method) if (method in self.supported_methods) else 0
         self.local_ip = self.config.get('local_address', DEFAULT_LOCAL[0])
         self.local_port = str(self.config.get('local_port', DEFAULT_LOCAL[1]))
-        self.password = self.config.get('password', None)
         self.timeout = str(self.config.get('timeout', DEFAULT_TIMEOUT))
-        self.supported_methods = method_supported.keys()
-        method = self.config.get('method')
-        self.method = self.supported_methods.index(method) if (method in self.supported_methods) else 0
         self.status = 'disconnected'
         self.childpid = None
         self.childexited = True
@@ -297,7 +299,8 @@ class ShadowSocks(object):
         self.password = self.entrys['password'].get_text()
         self.timeout = self.entrys['timeout'].get_text()
         self.method = self.entrys['encrypt_method'].get_active()
-        server = [self.server_ip, self.server_port]
+        method = self.supported_methods[self.method]
+        server = [self.server_ip, self.server_port, self.password, method]
         if server not in self.servers:
             self.servers.append(server)
 
@@ -308,8 +311,8 @@ class ShadowSocks(object):
         self.config['local_port'] = int(self.local_port)
         self.config['password'] = self.password
         self.config['timeout'] = int(self.timeout)
-        self.config['method'] = self.supported_methods[self.method]
         self.config['level'] = DEFAULT_LOGLEVEL
+        self.config['method'] = method
         save_config(self.config)
 
     def toggle_detail_button(self, widget, data=None):
