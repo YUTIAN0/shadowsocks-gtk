@@ -26,6 +26,10 @@ pygtk.require('2.0')
 import gtk
 import vte
 import subprocess
+import gettext
+gettext.bindtextdomain('shadowsocks_gtk', './locale/')
+gettext.textdomain('shadowsocks_gtk')
+_ = gettext.gettext
 
 
 from encrypt import method_supported
@@ -110,11 +114,11 @@ class ShadowSocks(object):
 
     def create_menu(self):
         self.menu = gtk.Menu()
-        self.showhide_item = gtk.MenuItem('Hide')
+        self.showhide_item = gtk.MenuItem(_('Hide'))
         self.showhide_item.connect('activate', self.toggle_showhide_item)
-        self.connect_item = gtk.MenuItem('Connect')
+        self.connect_item = gtk.MenuItem(_('Connect'))
         self.connect_item.connect('activate', self.toggle_connect)
-        self.quit_item = gtk.MenuItem('Quit')
+        self.quit_item = gtk.MenuItem(_('Quit'))
         self.quit_item.connect('activate', self.destroy)
         self.menu.append(self.connect_item)
         self.menu.append(self.showhide_item)
@@ -126,7 +130,7 @@ class ShadowSocks(object):
         hbox = gtk.HBox(False, 0)
         self.vbox.pack_start(hbox, False, False, 0)
         #create label header
-        label = gtk.Label(labelname + ' :')
+        label = gtk.Label(_(labelname) + ' :')
         label.set_size_request(LINE_HEADER_WIDTH, LINE_HEIGHT)
         label.set_properties(xalign=1)
         hbox.pack_start(label, False, False, 10)
@@ -212,10 +216,10 @@ class ShadowSocks(object):
         self.timeout_hbox = self.add_line('Timeout in Second', elements)
 
         #Status Line
-        self.labels['current_status'] = gtk.Label(self.status)
+        self.labels['current_status'] = gtk.Label(_(self.status))
         self.labels['current_status'].set_properties(xalign=0)
         self.labels['current_status'].show()
-        self.buttons['detail'] = gtk.Button('show detail')
+        self.buttons['detail'] = gtk.Button(_('show detail'))
         self.buttons['detail'].set_size_request(80, LINE_HEIGHT)
         self.buttons['detail'].connect("clicked", self.toggle_detail_button, None)
         elements = [(self.labels['current_status'], True, 0),
@@ -244,7 +248,7 @@ class ShadowSocks(object):
         #HButtonBox
         self.buttonbox = gtk.HButtonBox()
         self.buttonbox.set_layout(gtk.BUTTONBOX_END)
-        self.buttons['connect'] = gtk.Button('Connect')
+        self.buttons['connect'] = gtk.Button(_('Connect'))
         self.buttons['close'] = gtk.Button(stock=gtk.STOCK_CLOSE)
         self.buttonbox.add(self.buttons['connect'])
         self.buttonbox.add(self.buttons['close'])
@@ -271,23 +275,23 @@ class ShadowSocks(object):
     def update_status(self, connect):
         if connect:
             self.status = 'connected'
-            self.buttons['connect'].set_label('Disconnect')
-            self.connect_item.set_label('Disconnect')
+            self.buttons['connect'].set_label(_('Disconnect'))
+            self.connect_item.set_label(_('Disconnect'))
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("green"))
-            self.labels['current_status'].set_text('%s to %s' %
-                                                   (self.status, self.entrys['server_ip'].child.get_text()))
+            self.labels['current_status'].set_text('%s %s' %
+                                                   (_(self.status + ' to'), self.entrys['server_ip'].child.get_text()))
         else:
             self.status = 'disconnected'
-            self.buttons['connect'].set_label('Connect')
-            self.connect_item.set_label('Connect')
+            self.buttons['connect'].set_label(_('Connect'))
+            self.connect_item.set_label(_('Connect'))
             self.labels['current_status'].modify_fg(gtk.STATE_NORMAL, gtk.gdk.color_parse("black"))
-            self.labels['current_status'].set_text(self.status)
+            self.labels['current_status'].set_text(_(self.status))
 
     def toggle_showhide_item(self, widget=None):
-        if self.showhide_item.get_label() == 'Show':
+        if self.showhide_item.get_label() == _('Show'):
             self.window.deiconify()
             self.window.show()
-            self.showhide_item.set_label('Hide')
+            self.showhide_item.set_label(_('Hide'))
         else:
             self.window.iconify()
 
@@ -316,18 +320,18 @@ class ShadowSocks(object):
         save_config(self.config)
 
     def toggle_detail_button(self, widget, data=None):
-        if self.buttons['detail'].get_label() == 'show detail':
-            self.buttons['detail'].set_label('hide detail')
+        if self.buttons['detail'].get_label() == _('show detail'):
+            self.buttons['detail'].set_label(_('hide detail'))
             self.show_vte()
         else:
-            self.buttons['detail'].set_label('show detail')
+            self.buttons['detail'].set_label(_('show detail'))
             self.hide_vte()
 
     def show_detail_button(self):
         if self.status == 'connected':
-            self.buttons['detail'].set_label('show detail')
+            self.buttons['detail'].set_label(_('show detail'))
         else:
-            self.buttons['detail'].set_label('hide detail')
+            self.buttons['detail'].set_label(_('hide detail'))
         self.buttons['detail'].show()
 
     def hide_detail_button(self):
@@ -365,7 +369,7 @@ class ShadowSocks(object):
     def state_event(self, window, event):
         if event.changed_mask & gtk.gdk.WINDOW_STATE_ICONIFIED\
                 and event.new_window_state & gtk.gdk.WINDOW_STATE_ICONIFIED:
-            self.showhide_item.set_label('Show')
+            self.showhide_item.set_label(_('Show'))
             self.window.hide()
 
     def main(self):
