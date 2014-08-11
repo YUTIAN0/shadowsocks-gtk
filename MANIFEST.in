@@ -1,4 +1,0 @@
-recursive-include *.py
-include shadowsocks_gtk/shadowsocks.png
-include README.txt
-include LICENSE

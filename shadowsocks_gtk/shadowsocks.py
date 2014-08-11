@@ -27,13 +27,9 @@ import gtk
 import vte
 import subprocess
 import gettext
-gettext.bindtextdomain('shadowsocks_gtk', './locale/')
-gettext.textdomain('shadowsocks_gtk')
-_ = gettext.gettext
-
-
-from encrypt import method_supported
-from utils import get_config, save_config
+from pkg_resources import resource_filename
+from shadowsocks_gtk.encrypt import method_supported
+from shadowsocks_gtk.utils import get_config, save_config
 
 
 DEFAULT_LOGLEVEL = 'info'
@@ -45,10 +41,14 @@ LINE_HEADER_WIDTH = 120
 ADDRESS_WIDTH = 180
 PORT_WIDTH = 50
 LOGO_FILE = 'shadowsocks.png'
-
 DEFAULT_SERVER = ['209.141.36.62', '8348', '$#HAL9000!', 'aes-256-cfb']
 DEFAULT_LOCAL = ['127.0.0.1', '1080']
 DEFAULT_TIMEOUT = 600
+
+
+gettext.bindtextdomain('shadowsocks_gtk', resource_filename(__name__, 'locale'))
+gettext.textdomain('shadowsocks_gtk')
+_ = gettext.gettext
 
 
 class ShadowSocks(object):
@@ -98,12 +98,14 @@ class ShadowSocks(object):
         self.window.connect('window-state-event', self.state_event)
         self.window.connect("destroy", self.destroy)
         self.window.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
-        self.window.set_icon_from_file("shadowsocks.png")
+        logo = resource_filename(__name__, LOGO_FILE)
+        self.window.set_icon_from_file(logo)
         self.window.show()
 
     def create_trayicon(self):
         self.trayicon = gtk.StatusIcon()
-        self.trayicon.set_from_file(LOGO_FILE)
+        logo = resource_filename(__name__, LOGO_FILE)
+        self.trayicon.set_from_file(logo)
         self.trayicon.connect('popup-menu', self.show_menu)
         self.trayicon.connect('activate', self.toggle_showhide_item)
         self.trayicon.set_tooltip('ShadowSocks')

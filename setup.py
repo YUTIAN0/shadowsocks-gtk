@@ -1,13 +1,13 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 version = '0.1'
 
 setup(
     name='shadowsocks-gtk',
     version=version,
-    packages=['shadowsocks_gtk'],
+    packages=find_packages(),
     include_package_data=True,
-    package_data={'shadowsocks-gtk': ['LICENSE', 'README.rst', 'shadowsocks_gtk/shadowsocks.png']},
+    zip_safe=True,
     author='apporc',
     author_email='apporc@gmail.com',
     url='https://github.com/apporc/shadowsocks-gtk',
