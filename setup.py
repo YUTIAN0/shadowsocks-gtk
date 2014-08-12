@@ -15,15 +15,23 @@ setup(
     description='ShadowSocks Gtk Client',
     install_requires=[],
     classifiers=[
-        'Environment :: Desktop',
+        'Development Status :: 3 - Alpha',
         'Environment :: Console',
+        'Environment :: X11 Applications',
+        'Environment :: X11 Applications :: Gnome',
+        'Environment :: X11 Applications :: GTK',
+        'Framework :: Twisted',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: MIT License',
+        'Natural Language :: Chinese (Simplified)',
+        'Natural Language :: English',
         'Operating System :: POSIX',
-        'Programming Language :: Python',
-        'Topic :: Internet :: Proxy'
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Internet',
         ],
     entry_points={
         'console_scripts': [
