@@ -5,7 +5,7 @@ A [ShadowSocks](https://github.com/clowwindy/shadowsocks) Client written with py
 
 ###Requirements:
 * Debian/Ubuntu/LinuxMint:    
-``sudo apt-get python-twisted-core python-gtk2 python-m2crypto``
+``sudo apt-get install python-twisted-core python-gtk2 python-m2crypto``
 
 ###Install and Run:  
 * From pip:  
