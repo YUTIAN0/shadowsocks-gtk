@@ -15,7 +15,7 @@ A [ShadowSocks](https://github.com/clowwindy/shadowsocks) Client written with py
 ``python shadowsocks_gtk/shadowsocks.py``
 
 ###Build deb packages:
-    sudo apt-get install setuptools-git python-stdeb
+    sudo apt-get install python-setuptools-git python-stdeb python-all
     python setup.py --command-packages=stdeb.command bdist_deb
     
 ![Screenshot](https://raw.github.com/apporc/shadowsocks-gtk/master/screenshot.png)
