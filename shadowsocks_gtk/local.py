@@ -85,11 +85,10 @@ class SOCKSv5Outgoing(protocol.Protocol):
 
 class SOCKSv5(protocol.Protocol, TimeoutMixin):
 
-    inputTimeout = 600
-
     def __init__(self):
         self.server = config['server']
         self.server_port = config['server_port']
+        self.timeout = config['timeout']
         self.data_to_send = []
         self.state = STATE_INITIAL
         self.buf = ""
@@ -203,7 +202,7 @@ class SOCKSv5(protocol.Protocol, TimeoutMixin):
         return True
 
     def connectionMade(self):
-        self.setTimeout(self.inputTimeout)
+        self.setTimeout(self.timeout)
 
     def dataReceived(self, buf):
         self.resetTimeout()
