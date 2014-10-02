@@ -296,6 +296,8 @@ class ShadowSocks(object):
             self.showhide_item.set_label(_('Hide'))
         else:
             self.window.iconify()
+            self.window.hide()
+            self.showhide_item.set_label(_('Show'))
 
     def save(self):
         self.server_ip = self.entrys['server_ip'].child.get_text()
