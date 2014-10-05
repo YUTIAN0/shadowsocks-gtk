@@ -128,10 +128,10 @@ class ShadowSocks(object):
         self.menu.show_all()
 
     def add_line(self, labelname='Default Label :', elements=None):
-        #create HBox
+        # create HBox
         hbox = gtk.HBox(False, 0)
         self.vbox.pack_start(hbox, False, False, 0)
-        #create label header
+        # create label header
         label = gtk.Label(_(labelname) + ' :')
         label.set_size_request(LINE_HEADER_WIDTH, LINE_HEIGHT)
         label.set_properties(xalign=1)
@@ -162,7 +162,7 @@ class ShadowSocks(object):
     def fill_window(self):
         self.vbox = gtk.VBox(False, 10)
         self.window.add(self.vbox)
-        #Server Line
+        # Server Line
         liststore = gtk.ListStore(str)
         self.entrys['server_ip'] = gtk.ComboBoxEntry(liststore, 0)
         for server in self.servers:
@@ -181,7 +181,7 @@ class ShadowSocks(object):
         self.server_hbox = self.add_line('Server Address', elements)
         self.entrys['server_port'].connect('changed', self.check_port)
 
-        #Local Line
+        # Local Line
         self.entrys['local_ip'] = gtk.Entry()
         self.entrys['local_ip'].set_size_request(ADDRESS_WIDTH, LINE_HEIGHT)
         self.entrys['local_ip'].set_text(self.local_ip)
@@ -195,7 +195,7 @@ class ShadowSocks(object):
                     (self.entrys['local_port'], False, 0)]
         self.local_hbox = self.add_line('Local Listening', elements)
 
-        #Password Line
+        # Password Line
         self.entrys['password'] = gtk.Entry()
         self.entrys['password'].set_visibility(False)
         if self.password:
@@ -203,7 +203,7 @@ class ShadowSocks(object):
         elements = [(self.entrys['password'], True, 0)]
         self.pass_hbox = self.add_line('Password', elements)
 
-        #Encryption Method Line
+        # Encryption Method Line
         self.entrys['encrypt_method'] = gtk.combo_box_new_text()
         for method in self.supported_methods:
             self.entrys['encrypt_method'].append_text(method)
@@ -211,13 +211,13 @@ class ShadowSocks(object):
         elements = [(self.entrys['encrypt_method'], True, 0)]
         self.encrypt_hbox = self.add_line('Encryption Method', elements)
 
-        #Timeout Line
+        # Timeout Line
         self.entrys['timeout'] = gtk.Entry()
         self.entrys['timeout'].set_text(self.timeout)
         elements = [(self.entrys['timeout'], True, 0)]
         self.timeout_hbox = self.add_line('Timeout in Second', elements)
 
-        #Status Line
+        # Status Line
         self.labels['current_status'] = gtk.Label(_(self.status))
         self.labels['current_status'].set_properties(xalign=0)
         self.labels['current_status'].show()
@@ -228,15 +228,15 @@ class ShadowSocks(object):
                     (self.buttons['detail'], False, 0)]
         self.status_hbox = self.add_line('Current Status', elements)
 
-        #Add buttonbox
+        # Add buttonbox
         self.add_buttonbox()
 
-        #Terminal Window
+        # Terminal Window
         self.terminal = vte.Terminal()
         self.terminal.set_size_request(380, 180)
         self.vbox.pack_start(self.terminal, True, True, 0)
 
-        #Show them
+        # Show them
         self.server_hbox.show_all()
         self.local_hbox.show_all()
         self.pass_hbox.show_all()
@@ -247,7 +247,7 @@ class ShadowSocks(object):
         self.vbox.show()
 
     def add_buttonbox(self):
-        #HButtonBox
+        # HButtonBox
         self.buttonbox = gtk.HButtonBox()
         self.buttonbox.set_layout(gtk.BUTTONBOX_END)
         self.buttons['connect'] = gtk.Button(_('Connect'))
