@@ -55,6 +55,8 @@ class ShadowSocks(object):
     command = ['/usr/bin/env', 'python', 'local.py']
 
     def __init__(self, window=None):
+        self.autoconnect = False
+        self.visible = True
         self.supported_methods = method_supported.keys()
         self.config = get_config()
         server_ip = self.config.get('server', None)
@@ -65,6 +67,7 @@ class ShadowSocks(object):
             self.server_port = str(server_port)
             self.password = self.config.get('password')
             method = self.config.get('method')
+            self.autoconnect = True
         else:
             self.server_ip = DEFAULT_SERVER[0]
             self.server_port = DEFAULT_SERVER[1]
@@ -88,6 +91,12 @@ class ShadowSocks(object):
         self.create_trayicon()
         self.create_menu()
         self.fill_window()
+        # Auto connect.
+        if self.autoconnect:
+            self.toggle_showhide_item()
+            self.toggle_connect()
+        else:
+            self.window.show()
 
     def create_window(self):
         # create a new window
@@ -100,7 +109,6 @@ class ShadowSocks(object):
         self.window.set_size_request(WINDOW_WIDTH, WINDOW_HEIGHT)
         logo = resource_filename(__name__, LOGO_FILE)
         self.window.set_icon_from_file(logo)
-        self.window.show()
 
     def create_trayicon(self):
         self.trayicon = gtk.StatusIcon()
@@ -290,14 +298,16 @@ class ShadowSocks(object):
             self.labels['current_status'].set_text(_(self.status))
 
     def toggle_showhide_item(self, widget=None):
-        if self.showhide_item.get_label() == _('Show'):
-            self.window.deiconify()
-            self.window.show()
-            self.showhide_item.set_label(_('Hide'))
-        else:
+        if self.visible:
             self.window.iconify()
             self.window.hide()
             self.showhide_item.set_label(_('Show'))
+            self.visible = False
+        else:
+            self.window.deiconify()
+            self.window.show()
+            self.showhide_item.set_label(_('Hide'))
+            self.visible = True
 
     def save(self):
         self.server_ip = self.entrys['server_ip'].child.get_text()
@@ -375,6 +385,7 @@ class ShadowSocks(object):
                 and event.new_window_state & gtk.gdk.WINDOW_STATE_ICONIFIED:
             self.showhide_item.set_label(_('Show'))
             self.window.hide()
+            self.visible = False
 
     def main(self):
         gtk.main()
